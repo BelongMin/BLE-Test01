@@ -12,7 +12,7 @@ class MasterViewController: UITableViewController {
 
     var detailViewController: DetailViewController? = nil
     var objects = [Any]()
-
+    var testgit = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
