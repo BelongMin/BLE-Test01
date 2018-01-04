@@ -12,14 +12,13 @@ class MasterViewController: UITableViewController {
 
     var detailViewController: DetailViewController? = nil
     var objects = [Any]()
-    var testgit = 123
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         navigationItem.leftBarButtonItem = editButtonItem
 
-        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(insertNewObject(_:)))
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewDevice(_:)))
         navigationItem.rightBarButtonItem = addButton
         if let split = splitViewController {
             let controllers = split.viewControllers
@@ -42,6 +41,12 @@ class MasterViewController: UITableViewController {
         objects.insert(NSDate(), at: 0)
         let indexPath = IndexPath(row: 0, section: 0)
         tableView.insertRows(at: [indexPath], with: .automatic)
+    }
+    
+    @objc func addNewDevice(_ sender: Any) {
+        var sb = UIStoryboard(name: "Main", bundle:nil)
+        var addView = sb.instantiateViewController(withIdentifier: "addDev")
+        self.navigationController?.pushViewController(addView, animated: true)
     }
 
     // MARK: - Segues
@@ -90,6 +95,4 @@ class MasterViewController: UITableViewController {
         }
     }
 
-
 }
-
