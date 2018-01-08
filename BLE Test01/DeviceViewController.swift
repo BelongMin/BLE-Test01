@@ -47,11 +47,16 @@ class DeviceViewController: UIViewController, CBCentralManagerDelegate, CBPeriph
         
         self.peripheralToConnect.delegate = self
         peripheralStateDetect(currentPeripheral: peripheralToConnect)
+        uuidLabel.text = peripheralToConnect.identifier.uuidString
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        trCBCentralManager.cancelPeripheralConnection(peripheralToConnect)
     }
     
     func peripheralStateDetect(currentPeripheral: CBPeripheral) {
