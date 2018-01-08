@@ -14,6 +14,11 @@ class MyContentViewController: UIViewController, UITableViewDataSource, UITableV
     @IBOutlet weak var devTable: UITableView!
     @IBOutlet weak var scanButton: UIButton!
     
+    
+    let alertConnect = UIAlertController(title: "Note", message: "Connecting", preferredStyle: .alert)
+    let alertError = UIAlertController(title: "Note", message: "Connect Failed", preferredStyle: .alert)
+    let alertTimeOut = UIAlertController(title: "Note", message: "Connect Time out", preferredStyle: .alert)
+    
     var flagScan: Bool! = false
     var myCentralManager: CBCentralManager!
     var myPeripheral: CBPeripheral!
@@ -26,6 +31,16 @@ class MyContentViewController: UIViewController, UITableViewDataSource, UITableV
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+        let cancelAction = UIAlertAction(title: "Cancel Connect", style: .default, handler: {
+            action in
+            self.myCentralManager.cancelPeripheralConnection(self.myPeripheralToMainView)
+        })
+        alertConnect.addAction(cancelAction)
+        
+        let okAction = UIAlertAction(title: "Done", style: .default, handler: nil)
+        alertError.addAction(okAction)
+        alertTimeOut.addAction(okAction)
+        
         self.myCentralManager = CBCentralManager(delegate: self, queue: nil)
         
     }
@@ -56,6 +71,19 @@ class MyContentViewController: UIViewController, UITableViewDataSource, UITableV
         myPeripherals.removeAllObjects()
         devTable.reloadData()
     }
+    
+    func connectPeripheral(peripheral: CBPeripheral) {
+        myCentralManager.connect(peripheral, options: nil)
+        var nameToConnect: String!
+        if peripheral.name == nil {
+            nameToConnect = "Unknow Device"
+        } else {
+            nameToConnect = peripheral.name!
+        }
+        alertConnect.message = "\(nameToConnect) is connecting"
+        self.present(alertConnect, animated: true, completion: nil)
+    }
+    
     /*
     // MARK: - Navigation
 
@@ -96,12 +124,36 @@ class MyContentViewController: UIViewController, UITableViewDataSource, UITableV
         return cell
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        NSLog("停止搜索")
+        self.myCentralManager.stopScan()
+        scanButton.setTitle("Scan", for: UIControlState.normal)
+        flagScan = false
+        
+       devTable.deselectRow(at: indexPath, animated: true)
+        
+        let myPeriDict: NSDictionary = myPeripherals[indexPath.row] as! NSDictionary
+        myPeripheralToMainView = myPeriDict.value(forKey: "peripheral") as! CBPeripheral
+        NSLog("点击设备， NAME=\(myPeripheralToMainView.name!), UUID=\(myPeripheralToMainView.identifier)")
+        connectPeripheral(peripheral: myPeripheralToMainView)
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "showDevice"{
+            let myVC = segue.destination as! DeviceViewController
+            myVC.peripheralToConnect = myPeripheralToMainView
+            myVC.trCBCentralManager = myCentralManager
+        }
+    }
+    
     // MARK: - CBCentral Manager Delegate methods
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         switch central.state {
         case CBManagerState.poweredOn:
             NSLog("启动成功，开始搜索")
             myCentralManager.scanForPeripherals(withServices: nil, options: nil)
+            scanButton.setTitle("Stop", for: UIControlState.normal)
+            flagScan = true
         case CBManagerState.unauthorized:
             NSLog("无BLE权限")
         case CBManagerState.poweredOff:
@@ -127,5 +179,20 @@ class MyContentViewController: UIViewController, UITableViewDataSource, UITableV
             }
         }
         self.devTable.reloadData()
+    }
+    
+    func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        NSLog("已连接\(peripheral.name!)")
+        self.myPeripheralToMainView! = peripheral
+        self.alertConnect.dismiss(animated: false, completion: {
+            self.performSegue(withIdentifier: "showDevice", sender: nil)
+        })
+    }
+    
+    func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        NSLog("连接失败，设备名\(peripheral.name!), 原因\(String(describing: error))")
+        alertConnect.dismiss(animated: false, completion: {
+            self.present(self.alertError, animated: false, completion: nil)
+        })
     }
 }
